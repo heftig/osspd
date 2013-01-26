@@ -2,7 +2,7 @@
 # DESTDIR is completely respected
 CC := gcc
 AR := ar
-CFLAGS := -Wall $(CFLAGS)
+CFLAGS := -Wall $(CFLAGS) $(CPPFLAGS)
 XLDFLAGS := $(LDFLAGS)
 LDFLAGS := -L. -lossp $(LDFLAGS)
 prefix := /usr/local
