@@ -21,27 +21,27 @@
 
 #include "ossp-slave.h"
 
-static const char *usage =
-"usage: ossp-SLAVE [options]\n"
-"\n"
-"proxies commands from osspd to pulseaudio\n"
-"\n"
-"options:\n"
-"    -u UID            uid to use\n"
-"    -g GID            gid to use\n"
-"    -c CMD_FD         fd to receive commands from osspd\n"
-"    -n NOTIFY_FD      fd to send async notifications to osspd\n"
-"    -m MMAP_FD        fd to use for mmap\n"
-"    -o MMAP_OFFSET    mmap offset\n"
-"    -s MMAP_SIZE      mmap size\n"
-"    -l LOG_LEVEL      set log level\n"
-"    -t                enable log timestamps\n";
+#define USAGE \
+	"usage: %s [options]\n" \
+	"\n" \
+	"proxies commands from osspd to audio output\n" \
+	"\n" \
+	"options:\n" \
+	"    -u UID            uid to use\n" \
+	"    -g GID            gid to use\n" \
+	"    -c CMD_FD         fd to receive commands from osspd\n" \
+	"    -n NOTIFY_FD      fd to send async notifications to osspd\n" \
+	"    -m MMAP_FD        fd to use for mmap\n" \
+	"    -o MMAP_OFFSET    mmap offset\n" \
+	"    -s MMAP_SIZE      mmap size\n" \
+	"    -l LOG_LEVEL      set log level\n" \
+	"    -t                enable log timestamps\n"
 
 char ossp_user_name[OSSP_USER_NAME_LEN];
 int ossp_cmd_fd = -1, ossp_notify_fd = -1;
 void *ossp_mmap_addr[2];
 
-void ossp_slave_init(int argc, char **argv)
+void ossp_slave_init(const char *slave_name, int argc, char **argv)
 {
 	int have_uid = 0, have_gid = 0;
 	uid_t uid;
@@ -89,7 +89,7 @@ void ossp_slave_init(int argc, char **argv)
 	}
 
 	if (!have_uid || !have_gid || ossp_cmd_fd < 0 || ossp_notify_fd < 0) {
-		fputs(usage, stderr);
+		fprintf(stderr, USAGE, slave_name);
 		_exit(1);
 	}
 
@@ -98,14 +98,14 @@ void ossp_slave_init(int argc, char **argv)
 		snprintf(ossp_user_name, sizeof(ossp_user_name), "%s",
 			 pw->pw_name);
 
-	snprintf(ossp_log_name, sizeof(ossp_log_name), "ossp-padsp[%s:%d]",
-		 ossp_user_name, getpid());
+	snprintf(ossp_log_name, sizeof(ossp_log_name), "%s[%s:%d]",
+		 slave_name, ossp_user_name, getpid());
 
 	if (mmap_fd >= 0) {
 		void *p;
 
 		if (!mmap_off || !mmap_size) {
-			fputs(usage, stderr);
+			fprintf(stderr, USAGE, slave_name);
 			_exit(1);
 		}
 
